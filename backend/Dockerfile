@@ -9,7 +9,9 @@ RUN apt-get update && apt-get install -y \
     && rm -rf /var/lib/apt/lists/*
 
 COPY requirements.txt .
-RUN pip install --no-cache-dir -r requirements.txt
+
+RUN pip install --no-cache-dir "setuptools<81.0.0" wheel
+RUN pip install --no-cache-dir -r requirements.txt --no-build-isolation
 
 COPY . .
 
