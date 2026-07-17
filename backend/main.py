@@ -4,6 +4,7 @@ from dotenv import load_dotenv
 from auth import verify_jwt
 import resume
 import interview
+import os
 
 load_dotenv()
 
@@ -13,9 +14,15 @@ app = FastAPI(
     version="1.0.0",
 )
 
+# Build allowed origins: always include localhost for dev, plus any FRONTEND_URL for production
+allowed_origins = ["http://localhost:5173", "http://localhost:3000"]
+frontend_url = os.getenv("FRONTEND_URL")
+if frontend_url:
+    allowed_origins.append(frontend_url)
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:5173", "http://localhost:3000"],
+    allow_origins=allowed_origins,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
