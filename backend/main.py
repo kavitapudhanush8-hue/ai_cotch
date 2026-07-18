@@ -1,5 +1,7 @@
-from fastapi import FastAPI, Depends
+from fastapi import FastAPI, Depends, Request
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.staticfiles import StaticFiles
+from fastapi.responses import FileResponse
 from dotenv import load_dotenv
 from auth import verify_jwt
 import resume
@@ -31,14 +33,41 @@ app.add_middleware(
 app.include_router(resume.router)
 app.include_router(interview.router)
 
-@app.get("/")
-def read_root():
-    return {"message": "Welcome to the AI Interview Coach API"}
-
-@app.get("/health")
+@app.get("/api/health")
 def health_check():
     return {"status": "ok"}
 
 @app.get("/api/me")
 def get_current_user(payload: dict = Depends(verify_jwt)):
     return {"user_id": payload.get("sub"), "email": payload.get("email")}
+
+# Serve frontend static files if the build directory exists
+STATIC_DIR = os.path.join(os.path.dirname(__file__), "static")
+
+if os.path.isdir(STATIC_DIR):
+    # Mount static assets (JS, CSS, images) under /assets
+    assets_dir = os.path.join(STATIC_DIR, "assets")
+    if os.path.isdir(assets_dir):
+        app.mount("/assets", StaticFiles(directory=assets_dir), name="assets")
+
+    # Serve other static files (favicon, etc.) 
+    @app.get("/favicon.svg")
+    async def favicon():
+        favicon_path = os.path.join(STATIC_DIR, "favicon.svg")
+        if os.path.exists(favicon_path):
+            return FileResponse(favicon_path)
+
+    # SPA catch-all: serve index.html for any non-API route
+    @app.get("/{full_path:path}")
+    async def serve_spa(request: Request, full_path: str):
+        # If the file exists in static dir, serve it directly
+        file_path = os.path.join(STATIC_DIR, full_path)
+        if full_path and os.path.isfile(file_path):
+            return FileResponse(file_path)
+        # Otherwise serve index.html for client-side routing
+        return FileResponse(os.path.join(STATIC_DIR, "index.html"))
+else:
+    # Fallback when no frontend build is present (dev mode)
+    @app.get("/")
+    def read_root():
+        return {"message": "Welcome to the AI Interview Coach API"}

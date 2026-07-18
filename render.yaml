@@ -1,38 +1,14 @@
 services:
-  # Backend - FastAPI Web Service
+  # Combined Frontend + Backend using Docker
   - type: web
-    name: ai-interview-coach-api
-    runtime: python
+    name: ai-cotch
+    runtime: docker
     repo: https://github.com/kavitapudhanush8-hue/ai_cotch.git
-    rootDir: backend
-    buildCommand: pip install -r requirements.txt
-    startCommand: uvicorn main:app --host 0.0.0.0 --port $PORT
+    dockerfilePath: ./Dockerfile
     envVars:
-      - key: PYTHON_VERSION
-        value: "3.11.9"
       - key: SUPABASE_JWT_SECRET
         sync: false
       - key: DATABASE_URL
         sync: false
       - key: GEMINI_API_KEY
-        sync: false
-
-  # Frontend - Static Site
-  - type: web
-    name: ai-interview-coach
-    runtime: static
-    repo: https://github.com/kavitapudhanush8-hue/ai_cotch.git
-    rootDir: frontend
-    buildCommand: npm install && npm run build
-    staticPublishPath: dist
-    routes:
-      - type: rewrite
-        source: /*
-        destination: /index.html
-    envVars:
-      - key: VITE_SUPABASE_URL
-        sync: false
-      - key: VITE_SUPABASE_ANON_KEY
-        sync: false
-      - key: VITE_API_URL
         sync: false
